@@ -5,22 +5,26 @@ import { errorHandler } from "../utils/error.js";
 export const signup = async (req, res, next) => {
   const { username, email, password } = req.body;
 
-  const user = await User.findOne({ email, username });
-  if (user) {
-    return next(errorHandler(401, "User already exists"));
+  if (typeof password !== "string") {
+    return next(errorHandler(400, "Invalid password"));
   }
 
-  const hashdPassword = bcrypt.hashSync(password, 10);
-  const newUser = new User({
-    username,
-    email,
-    password: hashdPassword,
-  });
-
   try {
+    const user = await User.findOne({ email, username });
+    if (user) {
+      return next(errorHandler(401, "User already exists"));
+    }
+
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
+    });
+
     await newUser.save();
 
-    res.status(201).json("User created successfully");
+    res.status(201).json({ message: "User created successfully" });
   } catch (error) {
     next(error);
   }
